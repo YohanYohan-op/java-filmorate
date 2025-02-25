@@ -25,10 +25,11 @@ public class UserController {
     @PostMapping
     public User create(@RequestBody User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()
+                || !user.getEmail().contains("@")
                 || user.getLogin() == null || user.getLogin().isBlank()
                 || user.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
                 || user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("Ошибка создания сущности");
+            log.error("Ошибка создания сущности: {}", user);
             throw new ValidationException("invalid data");
         }
         user.setId(++current);
@@ -36,18 +37,18 @@ public class UserController {
             user.setName(user.getLogin());
         }
         users.put(user.getId(), user);
-        log.info("Сущность успешно создана");
+        log.info("Сущность успешно создана {}", user);
         return user;
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        if ( newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")
+        if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")
                 || newUser.getLogin() == null || newUser.getLogin().isBlank()
                 || newUser.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
                 || newUser.getBirthday().isAfter(LocalDate.now())
-                || newUser.getId() == 0 || newUser.getId()>current) {
-            log.error("Ошибка обновления сущности");
+                || newUser.getId() == 0 || newUser.getId() > current) {
+            log.error("Ошибка обновления сущности {}", newUser);
             throw new ValidationException("invalid data");
         }
         User oldUser = users.get(newUser.getId());
@@ -61,7 +62,7 @@ public class UserController {
         oldUser.setLogin(newUser.getLogin());
         oldUser.setBirthday(newUser.getBirthday());
         users.put(oldUser.getId(), oldUser);
-        log.info("Сущность успешно обновлена");
+        log.info("Сущность успешно обновлена {}", oldUser);
         return oldUser;
     }
 }

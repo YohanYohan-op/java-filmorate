@@ -7,11 +7,11 @@ import java.time.LocalDate;
 /**
  * Film.
  */
-@Data
-public class Film {
-    int id;
-    String name;
-    String description;
-    LocalDate releaseDate;
-    int duration;
+
+public @Data class Film {
+    private int id;
+    private String name;
+    private String description;
+    private LocalDate releaseDate;
+    private int duration;
 }
