@@ -14,7 +14,7 @@ import java.util.Map;
 @Slf4j
 @RequestMapping("/films")
 public class FilmController {
-    private final LocalDate FILM_BIRTHDAY = LocalDate.of(1895, 12, 28);
+    private final LocalDate filmBirthday = LocalDate.of(1895, 12, 28);
     private final Map<Integer, Film> films = new HashMap<>();
     private int current = 0;
 
@@ -25,7 +25,7 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        if (film.getName() == null || film.getName().isBlank() || film.getDescription().length() > 200 || film.getReleaseDate().isBefore(FILM_BIRTHDAY)
+        if (film.getName() == null || film.getName().isBlank() || film.getDescription().length() > 200 || film.getReleaseDate().isBefore(filmBirthday)
                 || film.getDuration() < 0) {
             log.error("Ошибка создания сущности {}", film);
             throw new ValidationException("invalid data");
@@ -38,7 +38,7 @@ public class FilmController {
 
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
-        if (newFilm.getName() == null || newFilm.getName().isBlank() || newFilm.getDescription().length() > 200 || newFilm.getReleaseDate().isBefore(FILM_BIRTHDAY)
+        if (newFilm.getName() == null || newFilm.getName().isBlank() || newFilm.getDescription().length() > 200 || newFilm.getReleaseDate().isBefore(filmBirthday)
                 || newFilm.getDuration() < 0) {
             log.error("Ошибка обновления сущности{}", newFilm);
             throw new ValidationException("invalid data");
