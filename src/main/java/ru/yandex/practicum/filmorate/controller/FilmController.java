@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -25,22 +26,30 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        if (film.getName() == null || film.getName().isBlank() || film.getDescription().length() > 200 || film.getReleaseDate().isBefore(filmBirthday)
-                || film.getDuration() < 0) {
+        if (!StringUtils.hasText(film.getName())
+                || !StringUtils.hasText(film.getDescription())
+                || film.getDescription().length() > 200
+                || film.getReleaseDate() == null
+                || film.getReleaseDate().isBefore(filmBirthday)
+                || film.getDuration() <= 0) {
             log.error("Ошибка создания сущности {}", film);
             throw new ValidationException("invalid data");
         }
         film.setId(++current);
         films.put(film.getId(), film);
-        log.info("Сущность успешно создана: {}", film);
+        log.info("Сущность успешно создана: id {}", film.getId());
+        log.debug("film: {}", film);
         return film;
     }
 
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
-        if (newFilm.getName() == null || newFilm.getName().isBlank() || newFilm.getDescription().length() > 200 || newFilm.getReleaseDate().isBefore(filmBirthday)
-                || newFilm.getDuration() < 0) {
-            log.error("Ошибка обновления сущности{}", newFilm);
+        if (!StringUtils.hasText(newFilm.getName()) || newFilm.getDescription().length() > 200
+                || newFilm.getReleaseDate() == null
+                || newFilm.getReleaseDate().isBefore(filmBirthday)
+                || newFilm.getDuration() <= 0
+                || newFilm.getId() == 0 || newFilm.getId() > current) {
+            log.error("Ошибка обновления сущности:{}", newFilm);
             throw new ValidationException("invalid data");
         }
         Film oldFilm = films.get(newFilm.getId());
@@ -49,7 +58,8 @@ public class FilmController {
         oldFilm.setReleaseDate(newFilm.getReleaseDate());
         oldFilm.setDuration(newFilm.getDuration());
         films.put(oldFilm.getId(), oldFilm);
-        log.info("Сущность успешно обновлена: {}", oldFilm);
+        log.info("Сущность успешно обновлена: id={}", oldFilm.getId());
+        log.debug("film: {}", oldFilm);
         return oldFilm;
     }
 }

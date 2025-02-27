@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -24,9 +25,10 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()
+        if (!StringUtils.hasText(user.getEmail())
                 || !user.getEmail().contains("@")
-                || user.getLogin() == null || user.getLogin().isBlank()
+                || !StringUtils.hasText(user.getLogin())
+                || user.getLogin().contains(" ")
                 || user.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
                 || user.getBirthday().isAfter(LocalDate.now())) {
             log.error("Ошибка создания сущности: {}", user);
@@ -37,14 +39,16 @@ public class UserController {
             user.setName(user.getLogin());
         }
         users.put(user.getId(), user);
-        log.info("Сущность успешно создана {}", user);
+        log.info("Сущность успешно создана: id {}", user.getId());
+        log.debug("user: {}", user);
         return user;
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        if (newUser.getEmail() == null || newUser.getEmail().isBlank() || !newUser.getEmail().contains("@")
-                || newUser.getLogin() == null || newUser.getLogin().isBlank()
+        if (!StringUtils.hasText(newUser.getEmail()) || !newUser.getEmail().contains("@")
+                || !StringUtils.hasText(newUser.getLogin())
+                || newUser.getLogin().contains(" ")
                 || newUser.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
                 || newUser.getBirthday().isAfter(LocalDate.now())
                 || newUser.getId() == 0 || newUser.getId() > current) {
@@ -62,7 +66,8 @@ public class UserController {
         oldUser.setLogin(newUser.getLogin());
         oldUser.setBirthday(newUser.getBirthday());
         users.put(oldUser.getId(), oldUser);
-        log.info("Сущность успешно обновлена {}", oldUser);
+        log.info("Сущность успешно обновлена: id {}", oldUser.getId());
+        log.debug("user: {}", oldUser);
         return oldUser;
     }
 }
