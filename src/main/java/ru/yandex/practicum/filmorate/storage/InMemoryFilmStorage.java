@@ -29,12 +29,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film create(Film film) {
-        if (!StringUtils.hasText(film.getName())
-                || !StringUtils.hasText(film.getDescription())
-                || film.getDescription().length() > 200
-                || film.getReleaseDate() == null
-                || film.getReleaseDate().isBefore(FILM_BIRTHDAY)
-                || film.getDuration() <= 0) {
+        if (!StringUtils.hasText(film.getName()) || !StringUtils.hasText(film.getDescription()) || film.getDescription().length() > 200 || film.getReleaseDate() == null || film.getReleaseDate().isBefore(FILM_BIRTHDAY) || film.getDuration() <= 0) {
             log.error("Ошибка создания сущности {}", film);
             throw new ValidationException("invalid data");
         }
@@ -47,11 +42,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film update(Film newFilm) {
-        if (!StringUtils.hasText(newFilm.getName()) || newFilm.getDescription().length() > 200
-                || newFilm.getReleaseDate() == null
-                || newFilm.getReleaseDate().isBefore(FILM_BIRTHDAY)
-                || newFilm.getDuration() <= 0
-                || newFilm.getId() == 0 || newFilm.getId() > current) {
+        if (!StringUtils.hasText(newFilm.getName()) || newFilm.getDescription().length() > 200 || newFilm.getReleaseDate() == null || newFilm.getReleaseDate().isBefore(FILM_BIRTHDAY) || newFilm.getDuration() <= 0 || newFilm.getId() == 0 || newFilm.getId() > current) {
             log.error("Ошибка обновления сущности:{}", newFilm);
             throw new ValidationException("invalid data");
         }
@@ -70,7 +61,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Collection<Film> delete(Film film) {
-        if (film == null || film.getId() == 0 || film.getId() > current){
+        if (film == null || film.getId() == 0 || film.getId() > current) {
             log.error("Ошибка удаления сущности:{}", film);
             throw new ValidationException("invalid data");
         }

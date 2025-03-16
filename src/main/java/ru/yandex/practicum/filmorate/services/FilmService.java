@@ -32,8 +32,7 @@ public class FilmService {
             log.error("Ошибка, лайк не добавлен:{} - filmID, {} - userId", filmID, userId);
             throw new ValidationException("invalid data");
         }
-        if (!filmStorage.getFilms().containsKey(filmID)
-                || !userStorage.getUsers().containsKey(userId)) {
+        if (!filmStorage.getFilms().containsKey(filmID) || !userStorage.getUsers().containsKey(userId)) {
             log.error("Ошибка, фильм или пользователь не найдены:{} - filmID, {} - userId", filmID, userId);
             throw new FilmNotFoundException("Film or user is not found");
         }
@@ -61,9 +60,7 @@ public class FilmService {
         if (count <= 0) {
             throw new ValidationException("invalid data");
         }
-        return filmStorage.getAllFilms().stream()
-                .sorted(Comparator.<Film>comparingInt(film -> film.getLikeScore().size()).reversed()) // Explicit type declaration
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getAllFilms().stream().sorted(Comparator.<Film>comparingInt(film -> film.getLikeScore().size()).reversed()) // Explicit type declaration
+                .limit(count).collect(Collectors.toList());
     }
 }

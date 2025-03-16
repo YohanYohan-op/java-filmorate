@@ -38,21 +38,22 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public Set<Integer> addFriends(@PathVariable int id, @PathVariable int friendId){
+    public Set<Integer> addFriends(@PathVariable int id, @PathVariable int friendId) {
         return userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public Set<Integer> deleteFriends(@PathVariable int id, @PathVariable int friendId){
+    public Set<Integer> deleteFriends(@PathVariable int id, @PathVariable int friendId) {
         return userService.deleteFromFriends(id, friendId);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Set<Integer> getMutualFriends(@PathVariable int id, @PathVariable int otherId){
+    public Set<Integer> getMutualFriends(@PathVariable int id, @PathVariable int otherId) {
         return userService.mutualFriends(id, otherId);
     }
+
     @GetMapping("/{id}/friends")
-    public Set<Integer> getFriends(@PathVariable int id){
+    public Set<Integer> getFriends(@PathVariable int id) {
         return userService.getFriends(id);
     }
 

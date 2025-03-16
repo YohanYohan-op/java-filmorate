@@ -27,17 +27,13 @@ public class UserService {
             log.error("Ошибка, нельзя добавить самого себя:{} - userID, {} - friendUserID", userID, friendUserID);
             throw new UserNotFoundException("Одинаковые id пользователя");
         }
-        Optional<User> findUser = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == userID)
-                .findFirst();
+        Optional<User> findUser = userStorage.getAllUsers().stream().filter(user -> user.getId() == userID).findFirst();
         if (findUser.isEmpty()) {
             log.error("Ошибка, пользователь не найден:{} - userID", userID);
             throw new UserNotFoundException("Пользователь не найден");
         }
 
-        Optional<User> findFriend = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == friendUserID)
-                .findFirst();
+        Optional<User> findFriend = userStorage.getAllUsers().stream().filter(user -> user.getId() == friendUserID).findFirst();
         if (findFriend.isEmpty()) {
             log.error("Ошибка, пользователь не найден:{} - userID", userID);
             throw new UserNotFoundException("Пользователь не найден");
@@ -54,14 +50,11 @@ public class UserService {
             log.error("Ошибка, id не могут быть одинаковыми:{} - userID, {} - friendUserID", userID, friendUserID);
             throw new UserNotFoundException("Одинаковые id пользователя");
         }
-        if (!userStorage.getUsers().containsKey(friendUserID)
-                || !userStorage.getUsers().containsKey(userID)) {
+        if (!userStorage.getUsers().containsKey(friendUserID) || !userStorage.getUsers().containsKey(userID)) {
             log.error("Ошибка, пользователь не найден:{} - friendUserID, {} - userID", friendUserID, userID);
             throw new UserNotFoundException("Пользователь не найден");
         }
-        Optional<User> findUser = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == userID)
-                .findFirst();
+        Optional<User> findUser = userStorage.getAllUsers().stream().filter(user -> user.getId() == userID).findFirst();
         if (findUser.isEmpty()) {
             log.error("Ошибка, пользователь не найден:{} - userID", userID);
             throw new UserNotFoundException("Пользователь не найден");
@@ -78,24 +71,17 @@ public class UserService {
             log.error("Ошибка, id не могут быть одинаковыми:{} - userID, {} - friendUserID", userID, friendUserID);
             throw new UserNotFoundException("Одинаковые id пользователя");
         }
-        if (!userStorage.getUsers().containsKey(friendUserID)
-                || !userStorage.getUsers().containsKey(userID)) {
+        if (!userStorage.getUsers().containsKey(friendUserID) || !userStorage.getUsers().containsKey(userID)) {
             log.error("Ошибка, пользователь не найден:{} - friendUserID, {} - userID", friendUserID, userID);
             throw new UserNotFoundException("Пользователь не найден");
         }
-        Optional<User> firstUser = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == userID)
-                .findFirst();
-        Optional<User> secondUser = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == friendUserID)
-                .findFirst();
+        Optional<User> firstUser = userStorage.getAllUsers().stream().filter(user -> user.getId() == userID).findFirst();
+        Optional<User> secondUser = userStorage.getAllUsers().stream().filter(user -> user.getId() == friendUserID).findFirst();
         if (firstUser.isEmpty() || secondUser.isEmpty()) {
             log.error("Ошибка, пользователь не найден:{} - userID, {} - friendUserID", userID, friendUserID);
             throw new UserNotFoundException("User is not found");
         }
-        return firstUser.get().getFriendsList().stream()
-                .filter(friendId -> secondUser.get().getFriendsList().contains(friendId))
-                .collect(Collectors.toSet());
+        return firstUser.get().getFriendsList().stream().filter(friendId -> secondUser.get().getFriendsList().contains(friendId)).collect(Collectors.toSet());
     }
 
     public Set<Integer> getFriends(Integer userID) {
@@ -103,9 +89,7 @@ public class UserService {
             log.error("Ошибка, пользователь не найден:{} - userID", userID);
             throw new UserNotFoundException("Пользователь не найден");
         }
-        Optional<User> firstUser = userStorage.getAllUsers().stream()
-                .filter(user -> user.getId() == userID)
-                .findFirst();
+        Optional<User> firstUser = userStorage.getAllUsers().stream().filter(user -> user.getId() == userID).findFirst();
         return firstUser.map(User::getFriendsList).orElse(null);
     }
 }

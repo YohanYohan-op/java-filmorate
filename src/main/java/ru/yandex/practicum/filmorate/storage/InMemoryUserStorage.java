@@ -27,12 +27,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User create(User user) {
-        if (!StringUtils.hasText(user.getEmail())
-                || !user.getEmail().contains("@")
-                || !StringUtils.hasText(user.getLogin())
-                || user.getLogin().contains(" ")
-                || user.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
-                || user.getBirthday().isAfter(LocalDate.now())) {
+        if (!StringUtils.hasText(user.getEmail()) || !user.getEmail().contains("@") || !StringUtils.hasText(user.getLogin()) || user.getLogin().contains(" ") || user.getBirthday().isBefore(LocalDate.of(1910, 1, 1)) || user.getBirthday().isAfter(LocalDate.now())) {
             log.error("Ошибка создания сущности: {}", user);
             throw new ValidationException("invalid data");
         }
@@ -48,12 +43,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User update(User newUser) {
-        if (!StringUtils.hasText(newUser.getEmail()) || !newUser.getEmail().contains("@")
-                || !StringUtils.hasText(newUser.getLogin())
-                || newUser.getLogin().contains(" ")
-                || newUser.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
-                || newUser.getBirthday().isAfter(LocalDate.now())
-                || newUser.getId() == 0 || newUser.getId() > current) {
+        if (!StringUtils.hasText(newUser.getEmail()) || !newUser.getEmail().contains("@") || !StringUtils.hasText(newUser.getLogin()) || newUser.getLogin().contains(" ") || newUser.getBirthday().isBefore(LocalDate.of(1910, 1, 1)) || newUser.getBirthday().isAfter(LocalDate.now()) || newUser.getId() == 0 || newUser.getId() > current) {
             log.error("Ошибка обновления сущности {}", newUser);
             throw new ValidationException("invalid data");
         }
