@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 /**
  * Film.
@@ -20,4 +21,6 @@ public class Film {
     private LocalDate releaseDate;
     @EqualsAndHashCode.Exclude
     private int duration;
+    @EqualsAndHashCode.Exclude
+    private Set<Integer> likeScore;
 }

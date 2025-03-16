@@ -1,73 +1,60 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.services.UserService;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 @RestController
 @Slf4j
 @RequestMapping("/users")
 public class UserController {
-    private final Map<Integer, User> users = new HashMap<>();
-    private int current = 0;
+    private final UserService userService;
+    private final UserStorage storage;
+
+    public UserController(UserService userService, InMemoryUserStorage storage) {
+        this.userService = userService;
+        this.storage = storage;
+    }
 
     @GetMapping
     public Collection<User> getAllUsers() {
-        return users.values();
+        return storage.getAllUsers();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        if (!StringUtils.hasText(user.getEmail())
-                || !user.getEmail().contains("@")
-                || !StringUtils.hasText(user.getLogin())
-                || user.getLogin().contains(" ")
-                || user.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
-                || user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("Ошибка создания сущности: {}", user);
-            throw new ValidationException("invalid data");
-        }
-        user.setId(++current);
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
-        users.put(user.getId(), user);
-        log.info("Сущность успешно создана: id {}", user.getId());
-        log.debug("user: {}", user);
-        return user;
+        return storage.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        if (!StringUtils.hasText(newUser.getEmail()) || !newUser.getEmail().contains("@")
-                || !StringUtils.hasText(newUser.getLogin())
-                || newUser.getLogin().contains(" ")
-                || newUser.getBirthday().isBefore(LocalDate.of(1910, 1, 1))
-                || newUser.getBirthday().isAfter(LocalDate.now())
-                || newUser.getId() == 0 || newUser.getId() > current) {
-            log.error("Ошибка обновления сущности {}", newUser);
-            throw new ValidationException("invalid data");
-        }
-        User oldUser = users.get(newUser.getId());
-        if (newUser.getName() == null) {
-            newUser.setName(newUser.getLogin());
-            oldUser.setName(newUser.getName());
-        } else {
-            oldUser.setName(newUser.getName());
-        }
-        oldUser.setEmail(newUser.getEmail());
-        oldUser.setLogin(newUser.getLogin());
-        oldUser.setBirthday(newUser.getBirthday());
-        users.put(oldUser.getId(), oldUser);
-        log.info("Сущность успешно обновлена: id {}", oldUser.getId());
-        log.debug("user: {}", oldUser);
-        return oldUser;
+        return storage.update(newUser);
     }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public Set<Integer> addFriends(@PathVariable int id, @PathVariable int friendId){
+        return userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public Set<Integer> deleteFriends(@PathVariable int id, @PathVariable int friendId){
+        return userService.deleteFromFriends(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Set<Integer> getMutualFriends(@PathVariable int id, @PathVariable int otherId){
+        return userService.mutualFriends(id, otherId);
+    }
+    @GetMapping("/{id}/friends")
+    public Set<Integer> getFriends(@PathVariable int id){
+        return userService.getFriends(id);
+    }
+
+
 }

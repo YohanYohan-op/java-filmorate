@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 public class User {
@@ -17,4 +18,6 @@ public class User {
     private String name;
     @EqualsAndHashCode.Exclude
     private LocalDate birthday;
+    @EqualsAndHashCode.Exclude
+    private Set<Integer> friendsList;
 }
