@@ -1,11 +1,10 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.services.UserService;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
 import java.util.Collection;
 import java.util.Set;
@@ -13,28 +12,23 @@ import java.util.Set;
 @RestController
 @Slf4j
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final UserStorage storage;
-
-    public UserController(UserService userService, InMemoryUserStorage storage) {
-        this.userService = userService;
-        this.storage = storage;
-    }
 
     @GetMapping
     public Collection<User> getAllUsers() {
-        return storage.getAllUsers();
+        return userService.getUserStorage().getAllUsers();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        return storage.create(user);
+        return userService.getUserStorage().create(user);
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
-        return storage.update(newUser);
+        return userService.getUserStorage().update(newUser);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -56,6 +50,4 @@ public class UserController {
     public Set<Integer> getFriends(@PathVariable int id) {
         return userService.getFriends(id);
     }
-
-
 }
