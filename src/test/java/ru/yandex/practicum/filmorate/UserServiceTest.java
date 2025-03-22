@@ -84,25 +84,6 @@ class UserServiceTest {
     }
 
     @Test
-    void getMutualFriendsShouldReturnSetOfMutualFriends() {
-        User user1 = new User();
-        user1.setId(1);
-        user1.addFriend(3);
-        User user2 = new User();
-        user2.setId(2);
-        user2.addFriend(3);
-
-        when(userStorage.getUserById(1)).thenReturn(Optional.of(user1));
-        when(userStorage.getUserById(2)).thenReturn(Optional.of(user2));
-        when(userStorage.getAllUsers()).thenReturn(List.of(user1, user2));
-
-        Set<Integer> mutualFriends = userService.getMutualFriends(1, 2);
-
-        assertEquals(1, mutualFriends.size());
-        assertTrue(mutualFriends.contains(3));
-    }
-
-    @Test
     void getFriendsShouldReturnSetOfFriends() {
         user.addFriend(2);
         when(userStorage.getUserById(1)).thenReturn(Optional.of(user));

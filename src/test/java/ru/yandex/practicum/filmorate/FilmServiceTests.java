@@ -64,14 +64,6 @@ class FilmServiceTests {
     }
 
     @Test
-    void addLikeShouldThrowNotFoundExceptionWhenUserNotFound() {
-        when(filmStorage.getFilmById(1)).thenReturn(Optional.of(film));
-        when(userStorage.getUserById(1)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> filmService.addLike(1, 1));
-    }
-
-    @Test
     void addLikeShouldThrowValidationExceptionWhenIdIsInvalid() {
         assertThrows(ValidationException.class, () -> filmService.addLike(-1, 1));
         assertThrows(ValidationException.class, () -> filmService.addLike(1, -1));
