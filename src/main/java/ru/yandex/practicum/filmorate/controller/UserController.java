@@ -1,53 +1,79 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.RequiredArgsConstructor;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.services.UserService;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.List;
+
+@Slf4j
 
 @RestController
-@Slf4j
 @RequestMapping("/users")
-@RequiredArgsConstructor
 public class UserController {
-    private final UserService userService;
+
+    private final UserService service;
+
+    //@Autowired
+    public UserController(UserService service) {
+        this.service = service;
+    }
 
     @GetMapping
-    public Collection<User> getAllUsers() {
-        return userService.getUserStorage().getAllUsers();
+    public List<User> gettingAllUsers() {
+        return service.getAllUsers();
+    }
+
+    @GetMapping("/{userId}")
+    public User getUserById(@PathVariable Integer userId) {
+        return service.getUserById(userId);
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
-        return userService.getUserStorage().create(user);
+    public User createUser(@NotNull @NotEmpty @Validated @Valid @RequestBody User user) {
+        isValid(user);
+        return service.createUser(user);
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
-        return userService.getUserStorage().update(newUser);
+    public User updateUser(@Valid @RequestBody User user) {
+        isValid(user);
+        return service.updateUser(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public Set<Integer> addFriends(@PathVariable int id, @PathVariable int friendId) {
-        return userService.addFriend(id, friendId);
+    public void addFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        service.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public Set<Integer> deleteFriends(@PathVariable int id, @PathVariable int friendId) {
-        return userService.deleteFromFriends(id, friendId);
-    }
-
-    @GetMapping("/{id}/friends/common/{otherId}")
-    public Set<Integer> getMutualFriends(@PathVariable int id, @PathVariable int otherId) {
-        return userService.mutualFriends(id, otherId);
+    public void removeFriend(@PathVariable Integer id, @PathVariable Integer friendId) {
+        service.removeFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends")
-    public Set<Integer> getFriends(@PathVariable int id) {
-        return userService.getFriends(id);
+    public List<User> getFriends(@PathVariable Integer id) {
+        return service.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCrossFriends(@PathVariable Integer id, @PathVariable Integer otherId) {
+        return service.getCrossFriends(id, otherId);
+    }
+
+    private void isValid(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        if (user.getLogin().contains(" ")) {
+            throw new ValidationException("Некорректные данные пользователя.");
+        }
     }
 }
