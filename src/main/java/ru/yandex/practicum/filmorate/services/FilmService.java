@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -22,18 +23,19 @@ public class FilmService {
     private final UserStorage userStorage;
 
     public void addLike(int filmId, int userId) {
-        validateId(filmId, userId);
+        getFilmById(filmId);
+        userStorage.getUserById(userId).orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
         Film film = getFilmById(filmId);
-        userStorage.getUserById(userId); //Проверяем, существует ли пользователь. Если нет, будет исключение
         film.addLike(userId);
         filmStorage.update(film);
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void removeLike(int filmId, int userId) {
-        validateId(filmId, userId);
+        getFilmById(filmId);
+        userStorage.getUserById(userId).orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
+
         Film film = getFilmById(filmId);
-        userStorage.getUserById(userId); //Проверяем, существует ли пользователь. Если нет, будет исключение
         film.removeLike(userId);
         filmStorage.update(film);
         log.info("Пользователь {} убрал лайк с фильма {}", userId, filmId);
@@ -45,10 +47,7 @@ public class FilmService {
             throw new ValidationException("Count должен быть больше 0");
         }
         log.info("Получение {} популярных фильмов", count);
-        return filmStorage.getAllFilms().stream()
-                .sorted(Comparator.<Film>comparingInt(film -> film.getLikeScore().size()).reversed())
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getAllFilms().stream().sorted(Comparator.<Film>comparingInt(film -> film.getLikeScore().size()).reversed()).limit(count).collect(Collectors.toList());
     }
 
     public Collection<Film> getAllFilms() {
@@ -65,26 +64,17 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        getFilmById(film.getId()); // Check if film exists
+        getFilmById(film.getId());
         Film updatedFilm = filmStorage.update(film);
         log.info("Обновлен фильм с ID: {}", updatedFilm.getId());
         return updatedFilm;
     }
 
     private Film getFilmById(int filmId) {
-        return filmStorage.getFilmById(filmId)
-                .orElseThrow(() -> {
-                    log.error("Фильм с ID {} не найден", filmId);
-                    return new NotFoundException("Фильм с ID " + filmId + " не найден");
-                });
-    }
-
-
-    private void validateId(int filmId, int userId) {
-        if (filmId <= 0 || userId <= 0) {
-            log.error("Невалидные ID: filmId={}, userId={}", filmId, userId);
-            throw new ValidationException("ID фильма и пользователя должны быть больше 0");
-        }
+        return filmStorage.getFilmById(filmId).orElseThrow(() -> {
+            log.error("Фильм с ID {} не найден", filmId);
+            return new NotFoundException("Фильм с ID " + filmId + " не найден");
+        });
     }
 
     private void validateFilm(Film film) {
@@ -92,7 +82,24 @@ public class FilmService {
             log.error("Передан null film");
             throw new ValidationException("Фильм не может быть null");
         }
-        // Validation logic here (name, description, date, duration)
+
+        if (film.getName() == null || film.getName().isEmpty()) {
+            log.error("Пустое имя фильма");
+            throw new ValidationException("Имя фильма не может быть пустым");
+        }
+
+        if (film.getDescription() == null || film.getDescription().length() > 200) {
+            log.error("Неверное описание фильма");
+            throw new ValidationException("Длина описания фильма должна быть до 200 символов");
+        }
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            log.error("Неверная дата релиза фильма");
+            throw new ValidationException("Дата релиза фильма не может быть раньше 28 декабря 1895 года");
+        }
+        if (film.getDuration() <= 0) {
+            log.error("Неверная продолжительность фильма");
+            throw new ValidationException("Продолжительность фильма должна быть положительной");
+        }
     }
 }
 

@@ -1,5 +1,9 @@
 package ru.yandex.practicum.filmorate.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -11,16 +15,21 @@ import java.util.Set;
 public class User {
     @EqualsAndHashCode.Include
     private int id;
+    @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Invalid email format")
     @EqualsAndHashCode.Exclude
     private String email;
+    @NotBlank(message = "Login cannot be blank")
+    @Pattern(regexp = "^\\S*$", message = "Login cannot contain spaces")
     @EqualsAndHashCode.Exclude
     private String login;
     @EqualsAndHashCode.Exclude
     private String name;
+    @PastOrPresent(message = "Birthday cannot be in the future")
     @EqualsAndHashCode.Exclude
     private LocalDate birthday;
     @EqualsAndHashCode.Exclude
-    private Set<Integer> friendsList = new HashSet<>();  //Инициализация по умолчанию
+    private Set<Integer> friendsList = new HashSet<>();
 
     public void addFriend(int friendId) {
         friendsList.add(friendId);

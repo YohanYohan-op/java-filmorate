@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -20,34 +21,46 @@ public class UserService {
     private final UserStorage userStorage;
 
     public void addFriend(int userId, int friendId) {
-        validateFriendship(userId, friendId);
+        if (userId == friendId) {
+            log.error("Попытка добавить себя в друзья: userId={}, friendId={}", userId, friendId);
+            throw new FriendsException("Нельзя добавить/удалить самого себя из друзей");
+        }
+
         User user = getUserById(userId);
         User friend = getUserById(friendId);
 
         user.addFriend(friendId);
+        friend.addFriend(userId); // Добавляем друга и пользователю
         userStorage.update(user);
+        userStorage.update(friend); // Обновляем обоих пользователей
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
     public void deleteFriend(int userId, int friendId) {
-        validateFriendship(userId, friendId);
+        if (userId == friendId) {
+            log.error("Попытка удалить себя из друзей: userId={}, friendId={}", userId, friendId);
+            throw new FriendsException("Нельзя добавить/удалить самого себя из друзей");
+        }
+
         User user = getUserById(userId);
         User friend = getUserById(friendId);
 
         user.removeFriend(friendId);
+        friend.removeFriend(userId); // Удаляем друга и у пользователя
         userStorage.update(user);
+        userStorage.update(friend); // Обновляем обоих пользователей
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
     public Set<Integer> getMutualFriends(int userId, int otherId) {
-        validateFriendship(userId, otherId);
+        getUserById(userId);
+        getUserById(otherId);
+
         User user1 = getUserById(userId);
         User user2 = getUserById(otherId);
 
         log.info("Получение общих друзей пользователей {} и {}", userId, otherId);
-        return user1.getFriendsList().stream()
-                .filter(friendId -> user2.getFriendsList().contains(friendId))
-                .collect(Collectors.toSet());
+        return user1.getFriendsList().stream().filter(friendId -> user2.getFriendsList().contains(friendId)).collect(Collectors.toSet());
     }
 
     public Set<Integer> getFriends(int userId) {
@@ -69,35 +82,50 @@ public class UserService {
     }
 
     public User update(User user) {
+        getUserById(user.getId());
         validateUser(user);
-        getUserById(user.getId()); // Check if user exists
         User updatedUser = userStorage.update(user);
         log.info("Обновлен пользователь с ID: {}", updatedUser.getId());
         return updatedUser;
     }
 
     private User getUserById(int userId) {
-        return userStorage.getUserById(userId)
-                .orElseThrow(() -> {
-                    log.error("Пользователь с ID {} не найден", userId);
-                    return new NotFoundException("Пользователь с ID " + userId + " не найден");
-                });
+        return userStorage.getUserById(userId).orElseThrow(() -> {
+            log.error("Пользователь с ID {} не найден", userId);
+            return new NotFoundException("Пользователь с ID " + userId + " не найден");
+        });
     }
 
-
-    private void validateFriendship(int userId, int friendId) {
-        if (userId == friendId) {
-            log.error("Попытка добавить/удалить себя из друзей: userId={}, friendId={}", userId, friendId);
-            throw new FriendsException("Нельзя добавить/удалить самого себя из друзей"); // Более подходящее исключение
-        }
-    }
 
     private void validateUser(User user) {
         if (user == null) {
             log.error("Передан null user");
             throw new ValidationException("Пользователь не может быть null");
         }
-        // Validation logic here (email, login, birthday)
+        if (!isValidEmail(user.getEmail())) {
+            log.error("Невалидный email: {}", user.getEmail());
+            throw new ValidationException("Невалидный email");
+        }
+        if (!isValidLogin(user.getLogin())) {
+            log.error("Невалидный логин: {}", user.getLogin());
+            throw new ValidationException("Невалидный логин");
+        }
+        if (!isValidBirthday(user.getBirthday())) {
+            log.error("Невалидная дата рождения: {}", user.getBirthday());
+            throw new ValidationException("Невалидная дата рождения");
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.contains("@");
+    }
+
+    private boolean isValidLogin(String login) {
+        return login != null && !login.contains(" ");
+    }
+
+    private boolean isValidBirthday(LocalDate birthday) {
+        return birthday != null && birthday.isBefore(LocalDate.now());
     }
 }
 
