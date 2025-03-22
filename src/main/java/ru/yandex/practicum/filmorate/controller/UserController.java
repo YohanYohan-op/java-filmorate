@@ -18,32 +18,32 @@ public class UserController {
 
     @GetMapping
     public Collection<User> getAllUsers() {
-        return userService.getUserStorage().getAllUsers();
+        return userService.getAllUsers();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        return userService.getUserStorage().create(user);
+        return userService.create(user);
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
-        return userService.getUserStorage().update(newUser);
+    public User update(@RequestBody User user) {
+        return userService.update(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public Set<Integer> addFriends(@PathVariable int id, @PathVariable int friendId) {
-        return userService.addFriend(id, friendId);
+    public void addFriend(@PathVariable int id, @PathVariable int friendId) {
+        userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public Set<Integer> deleteFriends(@PathVariable int id, @PathVariable int friendId) {
-        return userService.deleteFromFriends(id, friendId);
+    public void deleteFriend(@PathVariable int id, @PathVariable int friendId) {
+        userService.deleteFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public Set<Integer> getMutualFriends(@PathVariable int id, @PathVariable int otherId) {
-        return userService.mutualFriends(id, otherId);
+        return userService.getMutualFriends(id, otherId);
     }
 
     @GetMapping("/{id}/friends")

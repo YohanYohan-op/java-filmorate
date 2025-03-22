@@ -4,11 +4,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Film.
- */
 @Data
 public class Film {
     @EqualsAndHashCode.Include
@@ -22,6 +20,14 @@ public class Film {
     @EqualsAndHashCode.Exclude
     private int duration;
     @EqualsAndHashCode.Exclude
-    private Set<Integer> likeScore;
+    private Set<Integer> likeScore = new HashSet<>(); //Инициализация по умолчанию
+
+    public void addLike(int userId) {
+        likeScore.add(userId);
+    }
+
+    public void removeLike(int userId) {
+        likeScore.remove(userId);
+    }
 }
 
