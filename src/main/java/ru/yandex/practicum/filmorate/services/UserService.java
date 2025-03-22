@@ -30,9 +30,9 @@ public class UserService {
         User friend = getUserById(friendId);
 
         user.addFriend(friendId);
-        friend.addFriend(userId); // Добавляем друга и пользователю
+        friend.addFriend(userId);
         userStorage.update(user);
-        userStorage.update(friend); // Обновляем обоих пользователей
+        userStorage.update(friend);
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
@@ -46,15 +46,13 @@ public class UserService {
         User friend = getUserById(friendId);
 
         user.removeFriend(friendId);
-        friend.removeFriend(userId); // Удаляем друга и у пользователя
+        friend.removeFriend(userId);
         userStorage.update(user);
-        userStorage.update(friend); // Обновляем обоих пользователей
+        userStorage.update(friend);
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
     public Set<Integer> getMutualFriends(int userId, int otherId) {
-        getUserById(userId);
-        getUserById(otherId);
 
         User user1 = getUserById(userId);
         User user2 = getUserById(otherId);
