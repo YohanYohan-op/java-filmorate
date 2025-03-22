@@ -1,44 +1,27 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Film.
+ */
 @Data
 public class Film {
-    private Set<Integer> likes;
-
-    private Integer id;
-    @NotBlank
+    @EqualsAndHashCode.Include
+    private int id;
+    @EqualsAndHashCode.Exclude
     private String name;
-    @NotBlank
-    @Size(min = 0, max = 200)
+    @EqualsAndHashCode.Exclude
     private String description;
-    @NotNull
+    @EqualsAndHashCode.Exclude
     private LocalDate releaseDate;
-    @Min(1)
-    @Positive
+    @EqualsAndHashCode.Exclude
     private int duration;
-
-    @Builder
-    public Film(String name, String description, LocalDate releaseDate, int duration) {
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.likes = new HashSet<>();
-    }
-
-    public void addLike(Integer filmId) {
-        likes.add(filmId);
-    }
-
-    public void remoteLike(Integer userId) {
-        likes.remove(userId);
-    }
-
+    @EqualsAndHashCode.Exclude
+    private Set<Integer> likeScore;
 }
+

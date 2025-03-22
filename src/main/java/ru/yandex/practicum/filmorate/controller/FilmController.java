@@ -1,72 +1,49 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.services.FilmService;
 
-import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @RestController
 @Slf4j
-@Validated
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
-
     private final FilmService service;
 
-    // @Autowired
-    public FilmController(FilmService service) {
-        this.service = service;
-    }
-
     @GetMapping
-    public List<Film> getAllFilms() {
-        return service.getAllFilms();
-    }
-
-    @GetMapping("/{filmId}")
-    public Film getFilmById(@Valid @PathVariable Integer filmId) {
-        return service.getFilmById(filmId);
+    public Collection<Film> getAllFilms() {
+        return service.getFilmStorage().getAllFilms();
     }
 
     @PostMapping
-    public Film createFilm(@Valid @RequestBody Film film) {
-        isValid(film);
-        return service.addFilm(film);
+    public Film create(@RequestBody Film film) {
+        return service.getFilmStorage().create(film);
     }
 
     @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) {
-        isValid(film);
-        return service.updateFilm(film);
+    public Film update(@RequestBody Film newFilm) {
+        return service.getFilmStorage().update(newFilm);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@Valid @PathVariable Integer id, @Valid @PathVariable Integer userId) {
-        service.addLike(id, userId);
+    public Film addLike(@PathVariable int id, @PathVariable int userId) {
+        return service.addLike(userId, id, true).get();
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void remoteLike(@PathVariable Integer id, @PathVariable Integer userId) {
-        service.remoteLike(id, userId);
+    public Film dislike(@PathVariable int id, @PathVariable int userId) {
+        return service.addLike(id, userId, false).get();
     }
 
     @GetMapping("/popular")
-    public List<Film> getMostPopular(@Positive @RequestParam(defaultValue = "10") Integer count) {
-        return service.getMostPopular(count);
-    }
-
-    private void isValid(Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Передан запрос POST с некорректным данными фильима {}.", film);
-            throw new ValidationException("Некорректные данные фильма.");
-        }
+    public List<Film> getTenTheMostPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        return service.getTenTheMostPopularFilms(count);
     }
 }
+
