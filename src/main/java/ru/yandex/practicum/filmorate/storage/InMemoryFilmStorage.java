@@ -62,6 +62,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.debug("film: {}", oldFilm);
         return oldFilm;
     }
+
     @Override
     public Collection<Film> delete(Film film) {
         if (film == null || film.getId() == 0 || film.getId() > current) {
