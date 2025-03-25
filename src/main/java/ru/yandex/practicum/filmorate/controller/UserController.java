@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.services.UserService;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @Slf4j
