@@ -11,7 +11,9 @@ import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,20 +53,19 @@ public class UserService {
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
-    public List<Integer> getMutualFriends(int userId, int otherId) {
+    public Set<User> getMutualFriends(int userId, int otherId) {
 
         User user1 = getUserById(userId);
         User user2 = getUserById(otherId);
 
         log.info("Получение общих друзей пользователей {} и {}", userId, otherId);
-
-        return user1.getFriendsList().stream().filter(friendId -> user2.getFriendsList().contains(friendId)).toList();
+        return user1.getFriendsList().stream().filter(user2.getFriendsList()::contains).map(userStorage::getUserById).flatMap(Optional::stream).collect(Collectors.toSet());
     }
 
-    public List<Integer> getFriends(int userId) {
+    public Set<User> getFriends(int userId) {
         User user = getUserById(userId);
         log.info("Получение списка друзей пользователя {}", userId);
-        return user.getFriendsList().stream().toList();
+        return user.getFriendsList().stream().map(userStorage::getUserById).flatMap(Optional::stream).collect(Collectors.toSet());
     }
 
     public Collection<User> getAllUsers() {
