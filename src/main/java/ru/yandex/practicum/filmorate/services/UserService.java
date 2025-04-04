@@ -5,11 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.FriendsException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -74,7 +72,6 @@ public class UserService {
     }
 
     public User create(User user) {
-        validateUser(user);
         User createdUser = userStorage.create(user);
         log.info("Создан пользователь с ID: {}", createdUser.getId());
         return createdUser;
@@ -82,7 +79,6 @@ public class UserService {
 
     public User update(User user) {
         getUserById(user.getId());
-        validateUser(user);
         User updatedUser = userStorage.update(user);
         log.info("Обновлен пользователь с ID: {}", updatedUser.getId());
         return updatedUser;
@@ -93,38 +89,6 @@ public class UserService {
             log.error("Пользователь с ID {} не найден", userId);
             return new NotFoundException("Пользователь с ID " + userId + " не найден");
         });
-    }
-
-
-    private void validateUser(User user) {
-        if (user == null) {
-            log.error("Передан null user");
-            throw new ValidationException("Пользователь не может быть null");
-        }
-        if (!isValidEmail(user.getEmail())) {
-            log.error("Невалидный email: {}", user.getEmail());
-            throw new ValidationException("Невалидный email");
-        }
-        if (!isValidLogin(user.getLogin())) {
-            log.error("Невалидный логин: {}", user.getLogin());
-            throw new ValidationException("Невалидный логин");
-        }
-        if (!isValidBirthday(user.getBirthday())) {
-            log.error("Невалидная дата рождения: {}", user.getBirthday());
-            throw new ValidationException("Невалидная дата рождения");
-        }
-    }
-
-    private boolean isValidEmail(String email) {
-        return email != null && email.contains("@");
-    }
-
-    private boolean isValidLogin(String login) {
-        return login != null && !login.contains(" ");
-    }
-
-    private boolean isValidBirthday(LocalDate birthday) {
-        return birthday != null && birthday.isBefore(LocalDate.now());
     }
 }
 

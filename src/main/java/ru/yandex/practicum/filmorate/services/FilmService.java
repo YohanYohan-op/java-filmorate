@@ -56,14 +56,16 @@ public class FilmService {
     }
 
     public Film create(Film film) {
-        validateFilm(film);
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            log.error("Неверная дата релиза фильма");
+            throw new ValidationException("Дата релиза фильма не может быть раньше 28 декабря 1895 года");
+        }
         Film createdFilm = filmStorage.create(film);
         log.info("Создан фильм с ID: {}", createdFilm.getId());
         return createdFilm;
     }
 
     public Film update(Film film) {
-        validateFilm(film);
         getFilmById(film.getId());
         Film updatedFilm = filmStorage.update(film);
         log.info("Обновлен фильм с ID: {}", updatedFilm.getId());
@@ -76,30 +78,4 @@ public class FilmService {
             return new NotFoundException("Фильм с ID " + filmId + " не найден");
         });
     }
-
-    private void validateFilm(Film film) {
-        if (film == null) {
-            log.error("Передан null film");
-            throw new ValidationException("Фильм не может быть null");
-        }
-
-        if (film.getName() == null || film.getName().isEmpty()) {
-            log.error("Пустое имя фильма");
-            throw new ValidationException("Имя фильма не может быть пустым");
-        }
-
-        if (film.getDescription() == null || film.getDescription().length() > 200) {
-            log.error("Неверное описание фильма");
-            throw new ValidationException("Длина описания фильма должна быть до 200 символов");
-        }
-        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Неверная дата релиза фильма");
-            throw new ValidationException("Дата релиза фильма не может быть раньше 28 декабря 1895 года");
-        }
-        if (film.getDuration() <= 0) {
-            log.error("Неверная продолжительность фильма");
-            throw new ValidationException("Продолжительность фильма должна быть положительной");
-        }
-    }
 }
-
