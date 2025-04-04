@@ -31,6 +31,7 @@ public class User {
     @EqualsAndHashCode.Exclude
     private Set<Integer> friendsList = new HashSet<>();
 
+
     public void addFriend(int friendId) {
         friendsList.add(friendId);
     }
