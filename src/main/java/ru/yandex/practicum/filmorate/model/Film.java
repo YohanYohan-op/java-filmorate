@@ -31,6 +31,12 @@ public class Film {
     private int duration;
 
     @EqualsAndHashCode.Exclude
+    private Genre genre;
+
+    @EqualsAndHashCode.Exclude
+    private MotionPictureAssociation mpa;
+
+    @EqualsAndHashCode.Exclude
     private Set<Integer> likeScore = new HashSet<>();
 
     public void addLike(int userId) {
@@ -41,4 +47,3 @@ public class Film {
         likeScore.remove(userId);
     }
 }
-
