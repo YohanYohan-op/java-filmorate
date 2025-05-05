@@ -1,16 +1,14 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.GenreNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.MpaNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -26,31 +24,28 @@ import java.util.*;
 
 @Slf4j
 @Component
-@Qualifier("filmDbStorage")
+@Primary
 public class FilmDbStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
-    private final UserDbStorage userDbStorage;
 
-    public FilmDbStorage(JdbcTemplate jdbcTemplate, GenreDbStorage genreDbStorage, MpaDbStorage mpaDbStorage, UserDbStorage userDbStorage) {
+    public FilmDbStorage(JdbcTemplate jdbcTemplate, GenreDbStorage genreDbStorage, MpaDbStorage mpaDbStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.genreDbStorage = genreDbStorage;
         this.mpaDbStorage = mpaDbStorage;
-        this.userDbStorage = userDbStorage;
     }
 
     @Override
     public Film postFilm(Film film) {
-        film.isValidation();
 
         if (film.getMpa() != null || film.getMpa().getName() != null) {
             int mpaId = film.getMpa().getId();
             String checkMpaSql = "SELECT COUNT(*) FROM MPA WHERE id = ?";
             Integer mpaCount = jdbcTemplate.queryForObject(checkMpaSql, Integer.class, mpaId);
             if (mpaCount == 0) {
-                throw new MpaNotFoundException(mpaId);
+                throw new NotFoundException("MPA not found");
             }
         } else {
             throw new ValidationException("MPA не может быть null");
@@ -61,9 +56,7 @@ public class FilmDbStorage implements FilmStorage {
             Set<Genre> uniqueGenres = new HashSet<>(film.getGenres());
             film.setGenres(new ArrayList<>(uniqueGenres));
 
-            List<Integer> genreIds = film.getGenres().stream()
-                    .map(Genre::getId)
-                    .toList();
+            List<Integer> genreIds = film.getGenres().stream().map(Genre::getId).toList();
 
             String checkGenresSql = "SELECT id FROM Genres WHERE id IN (:genreIds)";
             MapSqlParameterSource parameters = new MapSqlParameterSource();
@@ -75,7 +68,7 @@ public class FilmDbStorage implements FilmStorage {
             if (existingGenreIds.size() != genreIds.size()) {
                 Set<Integer> missingGenres = new HashSet<>(genreIds);
                 existingGenreIds.forEach(missingGenres::remove);
-                throw new GenreNotFoundException(missingGenres.toString());
+                throw new NotFoundException(missingGenres.toString());
             }
         }
 
@@ -106,18 +99,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film putFilm(Film film) {
-        film.isValidation();
-
         String sql = "UPDATE Films SET name = ?, description = ?, releaseDate = ?, mpa_id = ?, duration = ? WHERE id = ?";
-        int rowsUpdated = jdbcTemplate.update(sql,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getMpa() != null ? film.getMpa().getId() : null,
-                film.getDuration(),
-                film.getId());
+        int rowsUpdated = jdbcTemplate.update(sql, film.getName(), film.getDescription(), film.getReleaseDate(), film.getMpa() != null ? film.getMpa().getId() : null, film.getDuration(), film.getId());
         if (rowsUpdated == 0) {
-            throw new FilmNotFoundException(film.getId());
+            throw new NotFoundException("Film not found");
         }
 
         jdbcTemplate.update("DELETE FROM film_genres WHERE film_id = ?", film.getId());
@@ -134,21 +119,37 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> getFilms() {
-        String sql = "SELECT * FROM Films";
-        List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm);
-        films.forEach(this::loadGenresAndLikes);
-        return films.stream()
-                .sorted(Comparator.comparing(Film::getId))  // Сортировка по ID
+        String sql = "SELECT f.*, " +
+                "u.id AS like_user_id, u.login AS like_user_login, u.email AS like_user_email, " +
+                "u.name AS like_user_name, u.birthday AS like_user_birthday " +
+                "FROM Films f " +
+                "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                "LEFT JOIN Users u ON fl.like_user_id = u.id " +
+                "ORDER BY f.id";
+        return jdbcTemplate.query(sql, this::mapRowToFilm).stream()
+                .sorted(Comparator.comparing(Film::getId))
                 .toList();
     }
 
     @Override
     public Optional<Film> getFilmById(int filmId) {
-        String sql = "SELECT * FROM Films WHERE id = ?";
+        String sql = "SELECT f.*, " +
+                "m.id AS mpa_id, m.name AS mpa_name, " +
+                "g.id AS genre_id, g.name AS genre_name, " +
+                "u.id AS like_user_id, u.login AS like_user_login, " +
+                "u.email AS like_user_email, u.name AS like_user_name, " +
+                "u.birthday AS like_user_birthday " +
+                "FROM Films f " +
+                "LEFT JOIN MPA m ON f.mpa_id = m.id " +
+                "LEFT JOIN film_genres fg ON f.id = fg.film_id " +
+                "LEFT JOIN Genres g ON fg.genre_id = g.id " +
+                "LEFT JOIN film_likes fl ON f.id = fl.film_id " +
+                "LEFT JOIN Users u ON fl.like_user_id = u.id " +
+                "WHERE f.id = ?";
         Optional<Film> film = jdbcTemplate.query(sql, this::mapRowToFilm, filmId)
                 .stream()
                 .findFirst();
-        film.ifPresent(this::loadGenresAndLikes);
+        film.ifPresent(value -> value.setGenres(genreDbStorage.getGenresByFilmId(value.getId())));
         return film;
     }
 
@@ -161,27 +162,14 @@ public class FilmDbStorage implements FilmStorage {
                 "ORDER BY like_count DESC, f.id ASC " +
                 "LIMIT ?";
         List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, count);
-        films.forEach(this::loadGenresAndLikes);
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.getGenresByFilmId(film.getId()));
+            String sql2 = "SELECT u.* FROM Users u " +
+                    "JOIN film_likes fl ON u.id = fl.like_user_id " +
+                    "WHERE fl.film_id = ?";
+            film.setLikes(new HashSet<>(jdbcTemplate.query(sql2, this::mapRowToUser, film.getId())));
+        }
         return films;
-    }
-
-    private void loadGenresAndLikes(Film film) {
-        film.setGenres(genreDbStorage.getGenresByFilmId(film.getId()));
-
-        String sql = "SELECT u.* FROM Users u " +
-                "JOIN film_likes fl ON u.id = fl.like_user_id " +
-                "WHERE fl.film_id = ?";
-        film.setLikes(new HashSet<>(jdbcTemplate.query(sql, this::mapRowToUser, film.getId())));
-    }
-
-    public void addLike(int filmId, int userId) {
-        String sql = "INSERT INTO film_likes (film_id, like_user_id) VALUES (?, ?)";
-        jdbcTemplate.update(sql, filmId, userId);
-    }
-
-    public void removeLike(int filmId, int userId) {
-        String sql = "DELETE FROM film_likes WHERE film_id = ? AND like_user_id = ?";
-        jdbcTemplate.update(sql, filmId, userId);
     }
 
     private Film mapRowToFilm(ResultSet rs, int rowNum) throws SQLException {
@@ -210,4 +198,15 @@ public class FilmDbStorage implements FilmStorage {
         user.setBirthday(rs.getDate("birthday").toLocalDate());
         return user;
     }
+
+    public void addLike(int filmId, int userId) {
+        String sql = "INSERT INTO film_likes (film_id, like_user_id) VALUES (?, ?)";
+        jdbcTemplate.update(sql, filmId, userId);
+    }
+
+    public void removeLike(int filmId, int userId) {
+        String sql = "DELETE FROM film_likes WHERE film_id = ? AND like_user_id = ?";
+        jdbcTemplate.update(sql, filmId, userId);
+    }
+
 }

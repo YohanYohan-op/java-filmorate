@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
@@ -14,11 +15,12 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
 @Component
-@Qualifier("userDbStorage")
+@Primary
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
@@ -29,7 +31,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User postUser(User user) {
-        user.isValidation();
+        validate(user);
         String sql = "INSERT INTO Users (login, email, name, birthday) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -47,7 +49,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User putUser(User user) {
-        user.isValidation();
+        validate(user);
         String sql = "UPDATE Users SET login = ?, email = ?, name = ?, birthday = ? WHERE id = ?";
         int rowsUpdated = jdbcTemplate.update(sql,
                 user.getLogin(),
@@ -56,7 +58,7 @@ public class UserDbStorage implements UserStorage {
                 user.getBirthday(),
                 user.getId());
         if (rowsUpdated == 0) {
-            throw new UserNotFoundException(user.getId());
+            throw new NotFoundException("User not found");
         }
         log.info("Обновлен пользователь с id: {}", user.getId());
         return user;
@@ -64,10 +66,17 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Collection<User> getUsers() {
-        String sql = "SELECT * FROM Users";
-        List<User> users = jdbcTemplate.query(sql, this::mapRowToUser);
-        users.forEach(this::loadFriends);
-        return users.stream()
+        String sql = "SELECT u.*, " +
+                "f.friend_id AS friend_id, " +
+                "f.status AS friendship_status, " +
+                "uf.login AS friend_login, uf.email AS friend_email, " +
+                "uf.name AS friend_name, uf.birthday AS friend_birthday " +
+                "FROM Users u " +
+                "LEFT JOIN user_friends f ON u.id = f.user_id " +
+                "LEFT JOIN Users uf ON f.friend_id = uf.id " +
+                "ORDER BY u.id ASC, f.friend_id ASC";
+
+        return jdbcTemplate.query(sql, this::mapRowToUser).stream()
                 .sorted(Comparator.comparing(User::getId))
                 .toList();
     }
@@ -124,5 +133,22 @@ public class UserDbStorage implements UserStorage {
         user.setName(rs.getString("name"));
         user.setBirthday(rs.getDate("birthday").toLocalDate());
         return user;
+    }
+
+    private void validate(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            throw new ValidationException("email пустой или введен некорректно");
+        }
+        if (user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+            throw new ValidationException("login пустой или содержит пробелы");
+        }
+        if (user.getBirthday() == null) {
+            throw new ValidationException("Не указана дата рождения");
+        } else if (user.getBirthday().isAfter(LocalDate.now())) {
+            throw new ValidationException("Неверная дата рождения");
+        }
     }
 }

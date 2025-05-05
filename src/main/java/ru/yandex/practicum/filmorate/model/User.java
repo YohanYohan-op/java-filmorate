@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Past;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -33,21 +32,4 @@ public class User {
     @EqualsAndHashCode.Exclude
     @JsonIgnore
     private Set<User> friends = new HashSet<>();
-
-    public void isValidation() {
-        if (name == null || name.isBlank()) {
-            name = login;
-        }
-        if (email.isBlank() || !email.contains("@")) {
-            throw new ValidationException("email пустой или введен некорректно");
-        }
-        if (login.isBlank() || login.contains(" ")) {
-            throw new ValidationException("login пустой или содержит пробелы");
-        }
-        if (birthday == null) {
-            throw new ValidationException("Не указана дата рождения");
-        } else if (birthday.isAfter(LocalDate.now())) {
-            throw new ValidationException("Неверная дата рождения");
-        }
-    }
 }

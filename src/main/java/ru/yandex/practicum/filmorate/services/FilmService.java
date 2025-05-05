@@ -4,9 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.*;
+import ru.yandex.practicum.filmorate.exceptions.ContentNotException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MPA;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
@@ -14,9 +17,7 @@ import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,32 +44,26 @@ public class FilmService {
     }
 
     public Film create(Film film) {
-        if (film.getMpa() != null) {
-            mpaDbStorage.getMpaById(film.getMpa().getId())
-                    .orElseThrow(() -> new MpaNotFoundException(film.getMpa().getId()));
-        }
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            Set<Integer> uniqueGenreIds = film.getGenres().stream()
-                    .map(Genre::getId)
-                    .collect(Collectors.toSet());
-            List<Genre> uniqueGenres = uniqueGenreIds.stream()
-                    .map(id -> genreDbStorage.getGenreById(id)
-                            .orElseThrow(() -> new GenreNotFoundException(id)))
-                    .sorted(Comparator.comparing(Genre::getId))
-                    .toList();
-            film.setGenres(uniqueGenres);
-        }
-
+        validate(film);
         return filmStorage.postFilm(film);
     }
 
+    public Collection<Film> getFilms() {
+        return filmStorage.getFilms();
+    }
+
+    public Optional<Film> getFilmById(int filmId) {
+        return filmStorage.getFilmById(filmId);
+    }
+
     public Film update(Film film) {
+        validate(film);
         filmStorage.getFilmById(film.getId())
-                .orElseThrow(() -> new FilmNotFoundException(film.getId()));
+                .orElseThrow(() -> new NotFoundException("Film not found"));
 
         if (film.getMpa() != null) {
             mpaDbStorage.getMpaById(film.getMpa().getId())
-                    .orElseThrow(() -> new MpaNotFoundException(film.getMpa().getId()));
+                    .orElseThrow(() -> new NotFoundException("MPA not found"));
         }
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             Set<Integer> uniqueGenreIds = film.getGenres().stream()
@@ -76,7 +71,7 @@ public class FilmService {
                     .collect(Collectors.toSet());
             List<Genre> uniqueGenres = uniqueGenreIds.stream()
                     .map(id -> genreDbStorage.getGenreById(id)
-                            .orElseThrow(() -> new GenreNotFoundException(id)))
+                            .orElseThrow(() -> new NotFoundException("Genre not found")))
                     .sorted(Comparator.comparing(Genre::getId))
                     .toList();
             film.setGenres(uniqueGenres);
@@ -87,9 +82,9 @@ public class FilmService {
 
     public Film addLike(int filmId, int userId) {
         Film film = filmStorage.getFilmById(filmId)
-                .orElseThrow(() -> new FilmNotFoundException(filmId));
+                .orElseThrow(() -> new NotFoundException("Film not found"));
         User user = userStorage.getUserById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (film.getLikes().contains(user)) {
             throw new ValidationException("Пользователь " + user.getId() + " уже оценил этот фильм");
@@ -102,9 +97,9 @@ public class FilmService {
 
     public Film deleteLike(int filmId, int userId) {
         Film film = filmStorage.getFilmById(filmId)
-                .orElseThrow(() -> new FilmNotFoundException(filmId));
+                .orElseThrow(() -> new NotFoundException("Film not found"));
         User user = userStorage.getUserById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!film.getLikes().contains(user)) {
             throw new ContentNotException("Пользователь " + user.getId() + " еще не оценил этот фильм");
@@ -120,5 +115,38 @@ public class FilmService {
             throw new ValidationException("Количество фильмов должно быть положительным");
         }
         return filmDbStorage.getTopFilms(count);
+    }
+
+    public Collection<Genre> getAllGenres() {
+        return genreDbStorage.getAllGenres();
+    }
+
+    public Genre getGenreById(int id) {
+        return genreDbStorage.getGenreById(id)
+                .orElseThrow(() -> new NotFoundException("Genre not found"));
+    }
+
+    public Collection<MPA> getAllMpa() {
+        return mpaDbStorage.getAllMpa();
+    }
+
+    public MPA getMpaById(int id) {
+        return mpaDbStorage.getMpaById(id)
+                .orElseThrow(() -> new NotFoundException("MPA not found"));
+    }
+
+    private void validate(Film film) {
+        if (film.getName() == null || film.getName().isBlank()) {
+            throw new ValidationException("Название фильма не может быть пустым");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            throw new ValidationException("Описание фильма не может превышать 200 символов");
+        }
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(film.getMinReleaseDate())) {
+            throw new ValidationException("Дата релиза не может быть раньше 1895.10.28");
+        }
+        if (film.getDuration() <= 0) {
+            throw new ValidationException("Продолжительность фильма должна быть положительной");
+        }
     }
 }

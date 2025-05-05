@@ -3,12 +3,10 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.services.FilmService;
-import ru.yandex.practicum.filmorate.storage.interfaces.FilmStorage;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -18,31 +16,29 @@ import java.util.Optional;
 @Slf4j
 public class FilmController {
 
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
 
     @Autowired
-    public FilmController(@Qualifier("filmDbStorage") FilmStorage filmStorage, FilmService filmService) {
-        this.filmStorage = filmStorage;
+    public FilmController(FilmService filmService) {
         this.filmService = filmService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film addFilm(@Valid @RequestBody Film film) {
-        return filmStorage.postFilm(film);
+        return filmService.create(film);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<Film> getFilms() {
-        return filmStorage.getFilms();
+        return filmService.getFilms();
     }
 
     @GetMapping("/{filmId}")
     @ResponseStatus(HttpStatus.OK)
     public Optional<Film> getFilmById(@PathVariable int filmId) {
-        return filmStorage.getFilmById(filmId);
+        return filmService.getFilmById(filmId);
     }
 
     @GetMapping("/popular")
@@ -54,7 +50,7 @@ public class FilmController {
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public Film updateFilms(@Valid @RequestBody Film film) {
-        return filmStorage.putFilm(film);
+        return filmService.update(film);
     }
 
     @PutMapping("/{id}/like/{userId}")

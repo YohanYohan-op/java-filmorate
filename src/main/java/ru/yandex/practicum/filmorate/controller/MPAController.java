@@ -4,9 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.model.MPA;
-import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
+import ru.yandex.practicum.filmorate.services.FilmService;
 
 import java.util.Collection;
 
@@ -15,23 +14,22 @@ import java.util.Collection;
 @Slf4j
 public class MPAController {
 
-    private final MpaDbStorage mpaDbStorage;
+    private final FilmService filmService;
 
     @Autowired
-    public MPAController(MpaDbStorage mpaDbStorage) {
-        this.mpaDbStorage = mpaDbStorage;
+    public MPAController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<MPA> getAllMpa() {
-        return mpaDbStorage.getAllMpa();
+        return filmService.getAllMpa();
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public MPA getMpaById(@PathVariable int id) {
-        return mpaDbStorage.getMpaById(id)
-                .orElseThrow(() -> new MpaNotFoundException(id));
+        return filmService.getMpaById(id);
     }
 }

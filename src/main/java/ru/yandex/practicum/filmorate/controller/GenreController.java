@@ -4,9 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
+import ru.yandex.practicum.filmorate.services.FilmService;
 
 import java.util.Collection;
 
@@ -15,23 +14,22 @@ import java.util.Collection;
 @Slf4j
 public class GenreController {
 
-    private final GenreDbStorage genreDbStorage;
+    private final FilmService filmService;
 
     @Autowired
-    public GenreController(GenreDbStorage genreDbStorage) {
-        this.genreDbStorage = genreDbStorage;
+    public GenreController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<Genre> getAllGenres() {
-        return genreDbStorage.getAllGenres();
+        return filmService.getAllGenres();
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public Genre getGenreById(@PathVariable int id) {
-        return genreDbStorage.getGenreById(id)
-                .orElseThrow(() -> new GenreNotFoundException(id));
+        return filmService.getGenreById(id);
     }
 }

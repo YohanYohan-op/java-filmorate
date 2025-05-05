@@ -6,12 +6,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exceptions.ContentNotException;
-import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 import ru.yandex.practicum.filmorate.storage.interfaces.UserStorage;
 
+import java.util.Collection;
 import java.util.Set;
 
 @Slf4j
@@ -19,46 +19,62 @@ import java.util.Set;
 public class UserService {
 
     private final UserStorage userStorage;
-    private final UserDbStorage userDbStorage;
 
     @Autowired
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage, @Qualifier("userDbStorage") UserDbStorage userDbStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
-        this.userDbStorage = userDbStorage;
     }
 
     @Transactional
     public User addFriends(int userId1, int userId2) {
-        User user1 = userStorage.getUserById(userId1).orElseThrow(() -> new UserNotFoundException(userId1));
-        User user2 = userStorage.getUserById(userId2).orElseThrow(() -> new UserNotFoundException(userId2));
+        User user1 = userStorage.getUserById(userId1).orElseThrow(() -> new NotFoundException("User not found"));
+        User user2 = userStorage.getUserById(userId2).orElseThrow(() -> new NotFoundException("User not found"));
 
         if (user1.getFriends().contains(user2)) {
             throw new ValidationException("Пользователь " + user2.getId() + " уже добавлен в друзья");
         }
 
-        userDbStorage.addFriend(userId1, userId2);
+        userStorage.addFriend(userId1, userId2);
         user1.getFriends().add(user2);
         return user1;
     }
 
     @Transactional
     public User deleteFriends(int userId1, int userId2) {
-        User user1 = userStorage.getUserById(userId1).orElseThrow(() -> new UserNotFoundException(userId1));
-        User user2 = userStorage.getUserById(userId2).orElseThrow(() -> new UserNotFoundException(userId2));
+        User user1 = userStorage.getUserById(userId1).orElseThrow(() -> new NotFoundException("User not found"));
+        User user2 = userStorage.getUserById(userId2).orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!user1.getFriends().contains(user2)) {
             throw new ContentNotException("Пользователь " + user2.getId() + " не найден в списке друзей");
         }
 
-        userDbStorage.removeFriend(userId1, userId2);
+        userStorage.removeFriend(userId1, userId2);
         user1.getFriends().remove(user2);
         return user1;
     }
 
     public Set<User> getCommonFriends(int userId1, int userId2) {
-        userStorage.getUserById(userId1).orElseThrow(() -> new UserNotFoundException(userId1));
-        userStorage.getUserById(userId2).orElseThrow(() -> new UserNotFoundException(userId2));
-        return userDbStorage.getCommonFriends(userId1, userId2);
+        userStorage.getUserById(userId1).orElseThrow(() -> new NotFoundException("User not found"));
+        userStorage.getUserById(userId2).orElseThrow(() -> new NotFoundException("User not found"));
+        return userStorage.getCommonFriends(userId1, userId2);
+    }
+
+    public User postUser(User user) {
+        return userStorage.postUser(user);
+    }
+
+    public User putUser(User user) {
+        return userStorage.putUser(user);
+    }
+
+    public Collection<User> getUsers() {
+        return userStorage.getUsers();
+    }
+
+    public Collection<User> getFriends(int id) {
+        User user = userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        return user.getFriends();
     }
 }
 
