@@ -30,7 +30,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User postUser(User user) {
+    public User addUser(User user) {
         validate(user);
         String sql = "INSERT INTO Users (login, email, name, birthday) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -48,7 +48,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User putUser(User user) {
+    public User updateUser(User user) {
         validate(user);
         String sql = "UPDATE Users SET login = ?, email = ?, name = ?, birthday = ? WHERE id = ?";
         int rowsUpdated = jdbcTemplate.update(sql,

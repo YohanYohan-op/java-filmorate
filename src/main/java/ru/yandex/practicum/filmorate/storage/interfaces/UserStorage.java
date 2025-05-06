@@ -7,9 +7,9 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface UserStorage {
-    User postUser(User user);
+    User addUser(User user);
 
-    User putUser(User user);
+    User updateUser(User user);
 
     Collection<User> getUsers();
 

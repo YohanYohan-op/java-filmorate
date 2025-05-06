@@ -45,7 +45,7 @@ public class FilmService {
 
     public Film create(Film film) {
         validate(film);
-        return filmStorage.postFilm(film);
+        return filmStorage.addFilm(film);
     }
 
     public Collection<Film> getFilms() {
@@ -77,7 +77,7 @@ public class FilmService {
             film.setGenres(uniqueGenres);
         }
 
-        return filmStorage.putFilm(film);
+        return filmStorage.updateFilm(film);
     }
 
     public Film addLike(int filmId, int userId) {

@@ -59,12 +59,12 @@ public class UserService {
         return userStorage.getCommonFriends(userId1, userId2);
     }
 
-    public User postUser(User user) {
-        return userStorage.postUser(user);
+    public User addUser(User user) {
+        return userStorage.addUser(user);
     }
 
-    public User putUser(User user) {
-        return userStorage.putUser(user);
+    public User updateUser(User user) {
+        return userStorage.updateUser(user);
     }
 
     public Collection<User> getUsers() {

@@ -38,7 +38,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film postFilm(Film film) {
+    public Film addFilm(Film film) {
 
         if (film.getMpa() != null || film.getMpa().getName() != null) {
             int mpaId = film.getMpa().getId();
@@ -98,7 +98,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film putFilm(Film film) {
+    public Film updateFilm(Film film) {
         String sql = "UPDATE Films SET name = ?, description = ?, releaseDate = ?, mpa_id = ?, duration = ? WHERE id = ?";
         int rowsUpdated = jdbcTemplate.update(sql, film.getName(), film.getDescription(), film.getReleaseDate(), film.getMpa() != null ? film.getMpa().getId() : null, film.getDuration(), film.getId());
         if (rowsUpdated == 0) {
@@ -127,7 +127,6 @@ public class FilmDbStorage implements FilmStorage {
                 "LEFT JOIN Users u ON fl.like_user_id = u.id " +
                 "ORDER BY f.id";
         return jdbcTemplate.query(sql, this::mapRowToFilm).stream()
-                .sorted(Comparator.comparing(Film::getId))
                 .toList();
     }
 

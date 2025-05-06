@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public interface FilmStorage {
 
-    Film putFilm(Film film);
+    Film updateFilm(Film film);
 
-    Film postFilm(Film film);
+    Film addFilm(Film film);
 
     Collection<Film> getFilms();
 
