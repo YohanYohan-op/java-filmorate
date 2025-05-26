@@ -1,49 +1,41 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.Month;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data
 public class Film {
-    @EqualsAndHashCode.Include
     private int id;
 
-    @NotBlank(message = "Name cannot be blank")
-    @EqualsAndHashCode.Exclude
+    @NotBlank(message = "Название фильма не может быть пустым")
     private String name;
 
-    @Size(max = 200, message = "Description cannot exceed 200 characters")
-    @EqualsAndHashCode.Exclude
+    @Size(max = 200, message = "Описание фильма не может превышать 200 символов")
     private String description;
 
-    @NotNull(message = "Release date cannot be null")
-    @Past(message = "Release date must be in the past") // Добавлено @Past
-    @EqualsAndHashCode.Exclude
     private LocalDate releaseDate;
 
-    @Positive(message = "Duration must be positive")
-    @EqualsAndHashCode.Exclude
+    private List<Genre> genres = new ArrayList<>();
+
+    private MPA mpa;
+
+    @Positive(message = "Продолжительность фильма должна быть положительной")
     private int duration;
-
+    private Set<User> likes = new HashSet<>();
+    @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Genre genre;
-
-    @EqualsAndHashCode.Exclude
-    private MotionPictureAssociation mpa;
-
-    @EqualsAndHashCode.Exclude
-    private Set<Integer> likeScore = new HashSet<>();
-
-    public void addLike(int userId) {
-        likeScore.add(userId);
-    }
-
-    public void removeLike(int userId) {
-        likeScore.remove(userId);
-    }
+    @JsonIgnore
+    private final LocalDate minReleaseDate = LocalDate.of(1895, Month.DECEMBER, 28);
 }

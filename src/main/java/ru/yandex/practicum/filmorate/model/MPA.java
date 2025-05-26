@@ -6,13 +6,13 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Genre {
+public class MPA {
     private int id;
-    @NotBlank(message = "Название жанра не может быть пустым")
+    @NotBlank(message = "Название рейтинга MPA не может быть пустым")
     private String name;
 
-    public Genre(int id, String name) {
-        this.id = id;
-        this.name = name;
+    public MPA(int mpaId, String mpaName) {
+        this.id = mpaId;
+        this.name = mpaName;
     }
 }
